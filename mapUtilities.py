@@ -341,6 +341,8 @@ class mapManipulator(Node):
         
         
         plt.show()
+
+
             
 
 

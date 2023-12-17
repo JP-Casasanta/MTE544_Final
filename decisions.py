@@ -41,7 +41,8 @@ class decision_maker(Node):
         self.reachThreshold=0.1
 
 
-        self.localizer=localization(rawSensors)
+        #self.localizer=localization(rawSensors)
+        self.localizer=localization(kalmanFilter)
 
 
         self.goal = None
@@ -50,11 +51,11 @@ class decision_maker(Node):
 
 
         if motion_type==POINT_PLANNER:
-            self.controller=controller(klp=0.2, klv=0.5, kap=0.8, kav=0.6)      
+            self.controller=controller(klp=1.2, klv=0.0, kli=0.0, kap=0.8, kav=0.0, kai=0.0)      
             self.planner=planner(POINT_PLANNER)
             return -1
 
-        self.controller=trajectoryController(klp=0.2, klv=0.5, kap=0.8, kav=0.6)      
+        self.controller=trajectoryController(klp=0.5, klv=0.0, kli=0.0, kap=0.8, kav=0.0, kai=0.0)      
         
         if motion_type in [RRT_PLANNER, RRT_STAR_PLANNER, A_STAR_PLANNER]:
             self.planner = planner(motion_type)
@@ -162,8 +163,19 @@ def main(args=None):
     
     if args.motion == "point":
         DM=decision_maker(Twist, "/cmd_vel", 10, motion_type=POINT_PLANNER)
-    elif args.motion == "trajectory":
-        DM=decision_maker(Twist, "/cmd_vel", 10, motion_type=TRAJECTORY_PLANNER)
+
+    elif args.motion == "point":
+        DM=decision_maker(Twist, "/cmd_vel", 10, motion_type=A_STAR_PLANNER)
+
+    elif args.motion == "rrt":
+        DM=decision_maker(Twist, "/cmd_vel", 10, motion_type=RRT_PLANNER)
+
+    elif args.motion == "rrt_star":
+        DM=decision_maker(Twist, "/cmd_vel", 10, motion_type=RRT_STAR_PLANNER)
+
+    #elif args.motion == "trajectory":
+        #DM=decision_maker(Twist, "/cmd_vel", 10, motion_type=TRAJECTORY_PLANNER)
+
     else:
         print("invalid motion type", file=sys.stderr)
 
@@ -174,10 +186,13 @@ def main(args=None):
     except SystemExit:
         print(f"reached there successfully {DM.localizer.pose}")
         return
-
+    
+    #tf is this even - JP
+"""
     except e:
         print("error")
         return 
+"""
 
 
 

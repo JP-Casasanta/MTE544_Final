@@ -2,6 +2,7 @@ from math import atan2, asin, sqrt
 from sensor_msgs.msg import LaserScan
 
 import numpy as np
+import scipy.signal as sps
 
 M_PI=3.1415926535
 
@@ -149,3 +150,34 @@ def convertScanToCartesian(laserScan: LaserScan):
     cartesian_points_homo = np.column_stack((cartesian_points, np.ones(cartesian_points.shape[0])))
 
     return cartesian_points, cartesian_points_homo
+
+
+def smooth_path(path):
+
+    x_r = []
+    y_r = []
+
+    for point in path:
+        x_r.append(point[0])
+        y_r.append(point[1])
+
+    x_r = np.array(x_r)
+    y_r = np.array(y_r)
+
+    window = min(8, len(path))
+    polyorder = min(2, window - 1)
+
+    x_s = sps.savgol_filter(x_r, window, polyorder)
+    y_s = sps.savgol_filter(y_r, window, polyorder)
+
+    x_s[0] = x_r[0]
+    y_s[0] = y_r[0]
+    x_s[-1] = x_r[-1]
+    y_s[-1] = y_r[-1]
+
+    path_smooth = []
+
+    for i in range(0, len(x_s)):
+        path_smooth.append([x_s[i], y_s[i]])
+
+    return path_smooth

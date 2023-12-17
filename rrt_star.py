@@ -43,6 +43,7 @@ import math
 import sys
 import matplotlib.pyplot as plt
 import pathlib
+import random
 
 from rrt import RRT
 
@@ -110,25 +111,35 @@ class RRTStar(RRT):
             # Progress printout
             print("Iter:", i, ", number of nodes:", len(self.node_list)) 
 
-            # TODO Choose a random node and get the indeces of the nearest node
-            rnd = ...
-            nearest_ind = ...
-            # TODO Create a new node with steer
-            new_node = ...
+            # TODO Choose a random node and get the indeces of the nearest node : DONE
+            rnd = self.get_random_node()                                        #creates a random node, not chooses one
+            nearest_ind = self.get_nearest_node_index(self.node_list, rnd)      #finds nearest node to new node
+
+            # TODO Create a new node with steer : DONE
             near_node = self.node_list[nearest_ind]
-            # TODO Compute the cost of the new node taking into account the nearest node, near_node
-            new_node.cost = ...
+            new_node = self.steer(from_node=near_node, to_node=rnd, extend_length=self.expand_dis)
+            
+            # TODO Compute the cost of the new node taking into account the nearest node, near_node : DONE
+            new_node.cost = self.calc_new_cost(from_node=near_node, to_node=new_node)
 
-            # TODO Check for collisions using the check_collision function, and take actions accordingly
+            # TODO Check for collisions using the check_collision function, and take actions accordingly 
             # If there is no collision, branch to the shortest path (if applicable) and rewire
-            ...
+            no_collision = self.check_collision(node=new_node, obstacleList=self.obstacle_list, robot_radius=self.robot_radius)
 
+            if (no_collision):
+                near_inds = self.find_near_nodes(new_node=new_node)
+                new_node_best_parent = self.choose_parent(new_node=new_node, near_inds=near_inds)
+                
+
+                if new_node_best_parent is not None:
+                    self.node_list.append(new_node_best_parent)
+                    self.rewire(new_node=new_node_best_parent, near_inds=self.find_near_nodes(new_node=new_node))
 
             if animation:
                 self.draw_graph(rnd)
 
             if ((not self.search_until_max_iter)
-                    and new_node):  # if reaches goal
+                    and new_node_best_parent):  # if reaches goal
                 last_index = self.search_best_goal_node()
                 if last_index is not None:
                     return self.generate_final_course(last_index)
@@ -160,11 +171,17 @@ class RRTStar(RRT):
         if not near_inds:
             return None
 
+
+        #I think this is BS a bit, will comment out - JP            
+        """
         # Search nearest cost in near_inds
         costs = []
         for i in near_inds:
             # TODO find the costs of collision free nodes that, use float(inf) as cost if there is collision
-            ...
+
+            check_node = self.steer(from_node=self.node_list[i], to_node=new_node, extend_length=self.expand_dis)
+            safe = self.check_collision(node=check_node, obstacleList=self.obstacle_list, robot_radius=self.robot_radius)
+            cost = check_node.cos
 
         # Find the minimum cost
         min_cost = min(costs)
@@ -176,8 +193,37 @@ class RRTStar(RRT):
 
         # TODO Find which node has the minimum cost and set that as the new parent of new_node using steer, remember to update the cost of the updated new node
         ...
+        """
 
-        return new_node
+        
+        # Search nearest cost in near_inds
+        min_cost = float("inf")
+        min_cost_parent_index = -1
+
+        for i in near_inds:
+            # TODO find the costs of collision free nodes that, use float(inf) as cost if there is collision
+
+            check_node = self.steer(from_node=self.node_list[i], to_node=new_node)
+            no_collision = self.check_collision(node=check_node, obstacleList=self.obstacle_list, robot_radius=self.robot_radius)
+            cost = self.calc_new_cost(from_node=self.node_list[i], to_node=check_node) 
+            check_node.cost = cost if no_collision else float("inf")
+
+            if (check_node.cost < min_cost):
+                min_cost = check_node.cost
+                min_cost_parent_index = i
+
+
+
+        # If there is no new parent
+        if (min_cost == float("inf")):
+            print("There is no good path.(min_cost is inf)")
+            return None
+
+        # TODO Find which node has the minimum cost and set that as the new parent of new_node using steer, remember to update the cost of the updated new node
+        ret_node = self.steer(from_node=self.node_list[min_cost_parent_index], to_node=new_node)
+        ret_node.cost = self.calc_new_cost(from_node=self.node_list[min_cost_parent_index], to_node=ret_node) 
+        
+        return ret_node
 
     def search_best_goal_node(self):
         """
@@ -195,13 +241,14 @@ class RRTStar(RRT):
             if i <= self.expand_dis
         ]
 
+        #i also think this is dumb
+        """
         # Check if there is collision by connecting this node(s) with the goal pose
         safe_goal_inds = []
         for goal_ind in goal_inds:
             # TODO Create connection with goal using steer
-            t_node = ...
-            if self.check_collision(
-                    t_node, self.obstacle_list, self.robot_radius):
+            t_node = self.steer(from_node=self.node_list[goal_ind], to_node=self.goal_node)
+            if self.check_collision(node=t_node, obstacleList=self.obstacle_list, robot_radius=self.robot_radius):
                 safe_goal_inds.append(goal_ind)
 
         # If none are collision free, keep searching
@@ -209,13 +256,33 @@ class RRTStar(RRT):
             return None
 
         # TODO Compute the costs of the collision free nodes
-        safe_goal_costs = [...]
+        safe_goal_costs = []
 
         # Take the one with minimum cost
         min_cost = min(safe_goal_costs)
         for i, cost in zip(safe_goal_inds, safe_goal_costs):
             if cost == min_cost:
                 return i
+        """
+
+        # Check if there is collision by connecting this node(s) with the goal pose
+        best_cost = float("inf")
+        best_index = -1
+
+        for goal_ind in goal_inds:
+            # TODO Create connection with goal using steer
+            t_node = self.steer(from_node=self.node_list[goal_ind], to_node=self.goal_node)
+            no_collision = self.check_collision(node=t_node, obstacleList=self.obstacle_list, robot_radius=self.robot_radius)
+            
+            cost = self.calc_new_cost(from_node=self.node_list[goal_ind], to_node=t_node) if no_collision else float("inf")
+            
+            if (cost < best_cost):
+                best_cost = cost
+                best_index = goal_ind
+
+
+        if (best_cost < float("inf")):
+            return best_index
 
         return None
 
@@ -236,8 +303,8 @@ class RRTStar(RRT):
         """
         nnode = len(self.node_list) + 1
         r = self.connect_circle_dist * math.sqrt(math.log(nnode) / nnode)
-        # If expand_dist exists, search vertices in a range no more than
-        # expand_dist
+        # If expand_dis exists, search vertices in a range no more than
+        # expand_dis
         if hasattr(self, 'expand_dis'):
             r = min(r, self.expand_dis)
         dist_list = [(node.x - new_node.x)**2 + (node.y - new_node.y)**2
@@ -264,17 +331,17 @@ class RRTStar(RRT):
         """
         # TODO Check for costs of nearby nodes for each node in the list of near_inds
         for i in near_inds:
-            near_node = ...
-            edge_node = self.steer(new_node, near_node)
+            near_node = self.node_list[i]
+            edge_node = self.steer(from_node=new_node, to_node=near_node)
             if not edge_node:
                 continue
             # TODO Calculate the cost from near node to the new node (use calc_new_cost)
-            edge_node.cost = ...
+            edge_node.cost = self.calc_new_cost(from_node=new_node, to_node=edge_node)
 
             # TODO check for collisions using check_collision
-            no_collision = ...
+            no_collision = self.check_collision(node=edge_node, obstacleList=self.obstacle_list, robot_radius=self.robot_radius)
             # TODO check if the new cost is lower
-            improved_cost = ...
+            improved_cost = (edge_node.cost < self.node_list[i].cost)
 
             # If not collision and lower cost, then perform re-wiring
             if no_collision and improved_cost:
@@ -301,6 +368,8 @@ def main():
 
     # Define the list of virtual obstacles, see below for the entries
     # TODO define obstacles that make sense within the TurtleBot3's range
+    obstacle_list = []
+ #   """
     obstacle_list = [
         (5, 5, 1),
         (3, 6, 2),
@@ -311,7 +380,7 @@ def main():
         (8, 10, 1),
         (6, 12, 1),
     ]  # [x,y,size(radius)]
-
+#"""
     # Set Initial parameters, refer to the explanation at the top of this file
     rrt_star = RRTStar(
         start=[0, 0],
@@ -319,10 +388,13 @@ def main():
         rand_area=[-2, 15],
         obstacle_list=obstacle_list,
         expand_dis=1,
-        robot_radius=0.8)
-    
+        robot_radius=0.8,
+        max_iter=2000,
+        search_until_max_iter=False)
+
     # Search the path using RRT*
-    path = rrt_star.planning(animation=show_animation)
+    #path = rrt_star.planning(animation=show_animation)
+    path = rrt_star.planning(animation=False)
 
     if path is None:
         print("Cannot find path")

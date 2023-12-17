@@ -163,6 +163,9 @@ class RRT:
             node = node.parent
         path.append([node.x, node.y])
 
+        #i will flip list here - JP
+        path.reverse()
+
         return path
 
     def calc_dist_to_goal(self, x, y):
@@ -291,7 +294,8 @@ def main(gx=6.0, gy=10.0):
         # play_area=[0, 10, 0, 14]
         robot_radius=0.8
         )
-    path = rrt.planning(animation=show_animation)
+    #path = rrt.planning(animation=show_animation)
+    path = rrt.planning(animation=False)
 
     if path is None:
         print("Cannot find path")
