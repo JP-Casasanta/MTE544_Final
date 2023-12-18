@@ -3,7 +3,7 @@ from a_star import *
 from rrt import *
 from rrt_star import *
 import time
-from utilities import smooth_path
+from utilities import smooth_path, map_to_objlist
 
 POINT_PLANNER=0; A_STAR_PLANNER=1; RRT_PLANNER=2; RRT_STAR_PLANNER=3
 
@@ -34,11 +34,30 @@ class planner:
     def initTrajectoryPlanner(self):
         
         #### If using the map, you can leverage on the code below originally implemented for A* (BONUS points option)
-        #self.m_utilites=mapManipulator(laser_sig=0.4)    
-        #self.costMap=self.m_utilites.make_likelihood_field()
+        self.m_utilites=mapManipulator(laser_sig=0.4)    
+        self.costMap=self.m_utilites.make_likelihood_field()
 
         #TODO Remember to initialize the rrt_star
 
+        #obstacle_list = [map_to_objlist(self.costMap)]
+        obstacle_list = []
+
+
+        #print(self.costMap)
+
+
+        #for i in range(len())
+    
+        obs = self.m_utilites.getAllObstacles()
+
+        iter = 0
+        for elem in obs:
+            iter += 1
+            if (iter % 1 == 0):
+                add = (elem[0], elem[1], 0.01)
+                obstacle_list.append(add)
+
+        """
         obstacle_list = [
         (5, 5, 1),
         (3, 6, 2),
@@ -49,16 +68,24 @@ class planner:
         (8, 10, 1),
         (6, 12, 1),
     ]  # [x,y,size(radius)]
+        """
 
         self.rrt_star = RRTStar(
         start=[0, 0],
         goal=[6, 10],
-        rand_area=[-2, 15],
+        rand_area=[-10, 10],
         obstacle_list=obstacle_list,
-        expand_dis=1,
-        robot_radius=0.8,
-        max_iter=2000,
-        search_until_max_iter=True)
+        expand_dis=0.6,
+        robot_radius=0.4,
+        max_iter=6000,
+        search_until_max_iter=False,
+        path_resolution=0.3,
+        min_rand=-10,
+        max_rand=10)
+
+        
+
+        
 
         
     
@@ -82,7 +109,7 @@ class planner:
         startPose = [int(i/scale_factor) for i in startPose]
         endPose   = [int(j/scale_factor) for j in endPose]
 
-        #mazeOrigin = self.m_utilites.position_2_cell([0,0])
+        mazeOrigin = self.m_utilites.position_2_cell([0,0])
 
         # TODO This is for A*, modify this part to use RRT*
         #path = search(self.costMap, startPose, endPose, scale_factor)
@@ -92,9 +119,19 @@ class planner:
         self.rrt_star.goal_node = self.rrt_star.Node(endPoseCart[0],endPoseCart[1])
 
 
-
         path = self.rrt_star.planning(animation=False)
 
+        
+        if True:
+            self.rrt_star.draw_graph()
+            if path:
+                plt.plot([x for (x, y) in path], [y for (x, y) in path], 'r--')
+            plt.grid(True)
+            plt.xlim([-10, 10])
+            plt.ylim([-10, 10])
+            plt.show()
+        
+        
         end_time = time.time()
 
         # This will display how much time the search algorithm needed to find a path

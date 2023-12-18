@@ -71,7 +71,9 @@ class RRTStar(RRT):
                  max_iter=300,
                  connect_circle_dist=50.0,
                  search_until_max_iter=False,
-                 robot_radius=0.0):
+                 robot_radius=0.0,
+                 min_rand = -10.0,
+                 max_rand = 10.0):
         """
         Setting Parameter
 
@@ -106,10 +108,13 @@ class RRTStar(RRT):
         animation: flag for animation on or off .
         """
 
+        found_iter = -1
+
         self.node_list = [self.start]
         for i in range(self.max_iter):
             # Progress printout
-            print("Iter:", i, ", number of nodes:", len(self.node_list)) 
+            if (i % 100 == 0):
+                print("Iter:", i, ", number of nodes:", len(self.node_list)) 
 
             # TODO Choose a random node and get the indeces of the nearest node : DONE
             rnd = self.get_random_node()                                        #creates a random node, not chooses one
@@ -142,7 +147,10 @@ class RRTStar(RRT):
                     and new_node_best_parent):  # if reaches goal
                 last_index = self.search_best_goal_node()
                 if last_index is not None:
-                    return self.generate_final_course(last_index)
+                    if (found_iter == -1):
+                        found_iter = i
+                    elif (i > (found_iter + 100)):
+                        return self.generate_final_course(last_index)
 
         print("reached max iteration")
 

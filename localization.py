@@ -72,6 +72,21 @@ class localization(Node):
             #R=0.4*np.eye(4)
 
             Q= np.array([[0.1, 0, 0, 0, 0, 0], #x
+                        [0, 0.1, 0, 0, 0, 0], #y
+                        [0, 0, 0.01, 0, 0, 0], #th
+                        [0, 0, 0, 0.2, 0, 0], #w
+                        [0, 0, 0, 0, 0.2, 0], #v
+                        [0, 0, 0, 0, 0, 0.2]])#vdot
+
+            R= np.array([[0.2, 0, 0, 0], #v
+                        [0, 0.2, 0, 0], #w
+                        [0, 0, 0.8, 0], #ax
+                        [0, 0, 0, 0.8]])#ay
+            
+            P= np.zeros((6,6))
+
+            """
+            Q= np.array([[0.1, 0, 0, 0, 0, 0], #x
                          [0, 0.1, 0, 0, 0, 0], #y
                          [0, 0, 0.1, 0, 0, 0], #th
                          [0, 0, 0, 0.05, 0, 0], #w
@@ -80,17 +95,19 @@ class localization(Node):
 
             R= np.array([[0.001, 0, 0, 0], #v
                          [0, 0.05, 0, 0], #w
-                         [0, 0, 0.6, 0], #ax
-                         [0, 0, 0, 0.6]])#ay
+                         [0, 0, 0.15, 0], #ax
+                         [0, 0, 0, 0.1]])#ay
 
             P=Q.copy()
+            """
             
             self.kf=kalman_filter(P,Q,R, x)
             self.kalmanInitialized = True
         
-        dt = time.time() - self.timelast
+        #dt = time.time() - self.timelast
+        dt = Time.from_msg(imu_msg.header.stamp).nanoseconds/1E9 - self.timelast
 
-        self.timelast=time.time()
+        self.timelast=Time.from_msg(imu_msg.header.stamp).nanoseconds/1E9
 
 
         z=np.array([odom_msg.twist.twist.linear.x,

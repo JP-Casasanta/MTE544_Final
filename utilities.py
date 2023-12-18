@@ -1,5 +1,7 @@
 from math import atan2, asin, sqrt
 from sensor_msgs.msg import LaserScan
+from mapUtilities import *
+
 
 import numpy as np
 import scipy.signal as sps
@@ -181,3 +183,10 @@ def smooth_path(path):
         path_smooth.append([x_s[i], y_s[i]])
 
     return path_smooth
+
+def map_to_objlist(map):
+    obj_list = []
+
+    
+
+    return obj_list

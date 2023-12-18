@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from utilities import FileReader
+import math
 
 
 def plot_errors(filename):
@@ -62,8 +63,8 @@ def plot_errors(filename):
     axes[1].grid()
 
     axes[2].set_title("th Comparison")
-    axes[2].plot(time_list, [lin[6] for lin in values], label= headers[6])
-    axes[2].plot(time_list, [lin[13] for lin in values], label= headers[13])
+    axes[2].plot(time_list, [math.asin(math.sin(lin[6])) for lin in values], label= headers[6])
+    axes[2].plot(time_list, [math.asin(math.sin(lin[13])) for lin in values], label= headers[13])
     axes[2].legend()
     axes[2].grid()
 
