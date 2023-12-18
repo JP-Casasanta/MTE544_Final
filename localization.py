@@ -119,6 +119,8 @@ class localization(Node):
         self.kf.update(z)
         
         xhat=self.kf.get_states()
+        cov = self.kf.get_covar()
+        print(cov)
         
         self.pose=np.array([xhat[0],
                             xhat[1],
