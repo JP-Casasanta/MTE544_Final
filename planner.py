@@ -3,7 +3,7 @@ from a_star import *
 from rrt import *
 from rrt_star import *
 import time
-from utilities import smooth_path
+from utilities import smooth_path, Logger
 
 POINT_PLANNER=0; A_STAR_PLANNER=1; RRT_PLANNER=2; RRT_STAR_PLANNER=3
 
@@ -39,6 +39,7 @@ class planner:
 
         #TODO Remember to initialize the rrt_star
 
+        """ Trial 1/2
         obstacle_list = [
         (5, 5, 1),
         (3, 6, 2),
@@ -49,6 +50,24 @@ class planner:
         (8, 10, 1),
         (6, 12, 1),
     ]  # [x,y,size(radius)]
+    """
+        
+        #""" Trial 3/4
+        obstacle_list = [
+        (5, 5, 1),
+        (6, 6, 2),
+        (6, 8, 2),
+        (4, 10, 1),
+        (3, 10, 1),
+        (2, 10, 1),
+        (1, 10, 1),
+        (0, 10, 1),
+        (7, 5, 2),
+        (9, 5, 2),
+        (8, 10, 1),
+        (8, 12, 1),
+    ]  # [x,y,size(radius)]
+    #"""
 
         self.rrt_star = RRTStar(
         start=[0, 0],
@@ -110,6 +129,20 @@ class planner:
         # or add it as a method to the original rrt.py 
 
         path_smooth = smooth_path(Path)
+
+        if path_smooth is not None:
+            self.rrt_star.draw_graph()
+            #plt.plot(path[0][0], path[0][1], 'x', label="start")
+            #plt.plot(path[-1][0], path[-1][1], '+', label="end")
+            plt.plot([x for (x, y) in path], [y for (x, y) in path], 'r--', label="rough")
+            plt.plot([x for (x, y) in path_smooth], [y for (x, y) in path_smooth], 'b--', label="smooth")
+            plt.grid(True)
+            plt.legend()
+            plt.show()
+
+        pathLogger = Logger( "path.csv" , ["x", "y"])
+        for item in path_smooth:
+            pathLogger.log_values([item[0], item[1]])
 
         return path_smooth
 

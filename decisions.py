@@ -55,7 +55,7 @@ class decision_maker(Node):
             self.planner=planner(POINT_PLANNER)
             return -1
 
-        self.controller=trajectoryController(klp=0.5, klv=0.0, kli=0.0, kap=0.8, kav=0.0, kai=0.0)      
+        self.controller=trajectoryController(klp=0.5, klv=0.1, kli=0.1, kap=0.8, kav=0.1, kai=0.1)      
         
         if motion_type in [RRT_PLANNER, RRT_STAR_PLANNER, A_STAR_PLANNER]:
             self.planner = planner(motion_type)

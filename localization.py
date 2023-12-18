@@ -27,7 +27,7 @@ odom_qos=QoSProfile(reliability=2, durability=2, history=1, depth=10)
 
 class localization(Node):
     
-    def __init__(self, type, loggerName="robotPose.csv", loggerHeaders=["imu_ax", "imu_ay", "odom_vx", "odom_w", "enc_x", "enc_y", "enc_th", "kf_ax", "kf_ay", "kf_vx", "kf_w", "kf_x", "kf_y", "kf_th", "stamp"]):
+    def __init__(self, type, loggerName="robotPose.csv", loggerHeaders=["imu_ax", "imu_ay", "odom_vx", "odom_w", "enc_x", "enc_y", "enc_th", "kf_ax", "kf_ay", "kf_vx", "kf_w", "kf_x", "kf_y", "kf_th", "var_x", "var_y" "stamp"]):
 
         super().__init__("localizer")
         
@@ -68,29 +68,33 @@ class localization(Node):
                         0,
                         0])        
 
-            #Q=0.1*np.eye(6)
-            #R=0.4*np.eye(4)
+            #Q=0.2*np.eye(6)
+            #R=0.8*np.eye(4)
 
+           
             Q= np.array([[0.1, 0, 0, 0, 0, 0], #x
                          [0, 0.1, 0, 0, 0, 0], #y
                          [0, 0, 0.1, 0, 0, 0], #th
-                         [0, 0, 0, 0.05, 0, 0], #w
-                         [0, 0, 0, 0, 0.05, 0], #v
-                         [0, 0, 0, 0, 0, 0.05]])#vdot
+                         [0, 0, 0, 0.2, 0, 0], #w
+                         [0, 0, 0, 0, 0.2, 0], #v
+                         [0, 0, 0, 0, 0, 0.2]])#vdot
 
-            R= np.array([[0.001, 0, 0, 0], #v
-                         [0, 0.05, 0, 0], #w
-                         [0, 0, 0.6, 0], #ax
-                         [0, 0, 0, 0.6]])#ay
+            R= np.array([[0.2, 0, 0, 0], #v
+                         [0, 0.2, 0, 0], #w
+                         [0, 0, 0.8, 0], #ax
+                         [0, 0, 0, 0.8]])#ay
+           
 
-            P=Q.copy()
+            P=np.zeros((6,6))
             
             self.kf=kalman_filter(P,Q,R, x)
             self.kalmanInitialized = True
         
-        dt = time.time() - self.timelast
+        dt = Time.from_msg(imu_msg.header.stamp).nanoseconds/1E9 - self.timelast
+        if (self.timelast == time.time()):
+            dt = 0.1
 
-        self.timelast=time.time()
+        self.timelast=Time.from_msg(imu_msg.header.stamp).nanoseconds/1E9
 
 
         z=np.array([odom_msg.twist.twist.linear.x,
@@ -112,8 +116,10 @@ class localization(Node):
                     odom_msg.pose.pose.position.y,
                     euler_from_quaternion(odom_msg.pose.pose.orientation)]
         
+        cov = self.kf.get_covar()
         
-        self.loc_logger.log_values([z[2], z[3], z[0], z[1], pose_raw[0], pose_raw[1], pose_raw[2], xhat[5], xhat[4]*xhat[3], xhat[4], xhat[3], xhat[0], xhat[1], xhat[2], Time.from_msg(imu_msg.header.stamp).nanoseconds])
+        
+        self.loc_logger.log_values([z[2], z[3], z[0], z[1], pose_raw[0], pose_raw[1], pose_raw[2], xhat[5], xhat[4]*xhat[3], xhat[4], xhat[3], xhat[0], xhat[1], xhat[2], cov[0][0], cov[1][1], Time.from_msg(imu_msg.header.stamp).nanoseconds])
         
         #print(f"{xhat[0]} and {xhat[1]} vs {odom_msg.pose.pose.position.x} vs {odom_msg.pose.pose.position.y}")
     def odom_callback(self, pose_msg):

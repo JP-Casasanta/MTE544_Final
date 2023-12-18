@@ -63,6 +63,9 @@ class kalman_filter:
     def get_states(self):
         return self.x
     
+    def get_covar(self):
+        return self.P
+    
     def jacobian_A(self):
         x, y, th, w, v, vdot = self.x
         dt = self.dt

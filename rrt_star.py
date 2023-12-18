@@ -382,6 +382,7 @@ def main():
     ]  # [x,y,size(radius)]
 #"""
     # Set Initial parameters, refer to the explanation at the top of this file
+    """
     rrt_star = RRTStar(
         start=[0, 0],
         goal=[6, 10],
@@ -391,6 +392,19 @@ def main():
         robot_radius=0.8,
         max_iter=2000,
         search_until_max_iter=False)
+    """
+    
+    rrt_star = RRTStar(
+        start=[0, 0],
+        goal=[6, 10],
+        rand_area=[-2, 15],
+        obstacle_list=obstacle_list,
+        expand_dis=1,
+        robot_radius=0.4,
+        max_iter=4000,
+        search_until_max_iter=True,
+        connect_circle_dist=50,
+        path_resolution=0.25)
 
     # Search the path using RRT*
     #path = rrt_star.planning(animation=show_animation)

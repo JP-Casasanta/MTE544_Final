@@ -17,9 +17,12 @@ def plot_errors(filename):
     for val in values:
         time_list.append(val[-1] - first_stamp)
 
+    headers, path = FileReader("path.csv").read_file()
+
  
     plt.plot([lin[4] for lin in values], [lin[5] for lin in values], label= "enc")
     plt.plot([lin[11] for lin in values], [lin[12] for lin in values], label= "kf")
+    plt.plot([lin[0] for lin in path], [lin[1] for lin in path], label= "path")
     plt.title("state space")
     plt.grid()
     plt.xlabel("X")
